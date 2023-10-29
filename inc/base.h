@@ -60,3 +60,5 @@
 #define FATAL(...)
 #endif
 
+
+#define NSEC_TO_SEC(ns) ((ns) / 1000000000)

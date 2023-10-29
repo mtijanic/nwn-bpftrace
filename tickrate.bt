@@ -1,0 +1,65 @@
+#define can_be_run_as_shell_script /*
+set -e
+cpp -E -P -undef -Iinc $0 $* | sudo xargs -0 bpftrace -e
+exit 0
+# */
+#include "base.h"
+#include "CExoString.h"
+
+#ifndef TICKRATE_WARN_THRESHOLD
+#define TICKRATE_WARN_THRESHOLD 0
+#endif
+
+#if INTERACTIVE
+// On key press
+//    p - prints currently captured stored times
+//    c - clears the currently stored times
+//    q - exit the program
+kprobe:pty_write / arg2 == 1 / {
+    $key = *((int8*)arg1);
+    if ($key == 112 /* 'p' */) {
+        print(@tick_count_avg);
+        print(@tick_count_min);
+        print(@tick_count_hist);
+    }
+    if ($key == 99 /* 'c' */) {
+        clear(@tick_count_hist);
+        delete(@tick_count_min);
+        delete(@tick_count_avg);
+    }
+    if ($key == 113 /* 'q' */) {
+        exit();
+    }
+}
+#endif // INTERACTIVE
+
+
+uprobe:NWSERVER:_ZN13CServerExoApp8MainLoopEv {
+    // Don't count partial second tickrate when initializing.
+    $seconds_since_start = NSEC_TO_SEC(elapsed - nsecs);
+    if ($seconds_since_start > 1) {
+        @tick_count++;
+        $second = NSEC_TO_SEC(nsecs);
+        if (@last_tick_second == 0) {
+            @last_tick_second = $second;
+        }
+        if (@last_tick_second != $second) {
+            if (@tick_count < TICKRATE_WARN_THRESHOLD) {
+                WARNING("LOW TICKRATE: %d\n", @tick_count)
+            } else {
+                NOTICE("Tick count: %d\n", @tick_count)
+            }
+            @tick_count_avg = avg(@tick_count);
+            @tick_count_min = min(@tick_count);
+            @tick_count_hist = hist(@tick_count);
+            @tick_count = 0;
+            @last_tick_second = $second;
+        }
+    }
+}
+
+END {
+    delete(@last_tick_second);
+    delete(@tick_count);
+}
+
