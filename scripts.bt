@@ -1,0 +1,30 @@
+#define can_be_run_as_shell_script /*
+set -e
+cpp -E -P -undef -Iinc $0 $* | sudo xargs -0 bpftrace -e
+exit 0
+# */
+#include "base.h"
+#include "CExoString.h"
+
+uprobe:NWSERVER:_ZN15CVirtualMachine9RunScriptEP10CExoStringjii {
+    @recursion++;
+    @start_time[@recursion] = nsecs;
+    @name[@recursion] = CEXOSTR_TO_STR(arg1);
+}
+
+uretprobe:NWSERVER:_ZN15CVirtualMachine9RunScriptEP10CExoStringjii / @start_time[@recursion] / {
+    $exectime = nsecs - @start_time[@recursion];
+    $name = @name[@recursion];
+
+    @script_exec_times[$name] = stats($exectime);
+    INFO("%s.ncs took %lld ns\n", $name, $exectime)
+
+    @recursion--;
+}
+
+END {
+    clear(@start_time);
+    clear(@name);
+    delete(@recursion);
+}
+
