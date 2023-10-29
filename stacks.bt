@@ -1,0 +1,44 @@
+#define can_be_run_as_shell_script /*
+set -e
+cpp -E -P -undef -Iinc $0 $* | sudo xargs -0 bpftrace -e
+exit 0
+# */
+#include "base.h"
+
+#ifndef STACKTRACE_COUNT
+#define STACKTRACE_COUNT 20
+#endif
+
+#ifndef STACKTRACE_FREQUENCY
+#define STACKTRACE_FREQUENCY 999
+#endif
+
+#ifndef STACKTRACE_DEPTH
+#define STACKTRACE_DEPTH 8
+#endif
+
+profile:hz:STACKTRACE_FREQUENCY / comm == NWSERVER_NAME / {
+    @stacktrace[ustack(STACKTRACE_DEPTH)] = count();
+}
+
+// On key press
+//    p - prints currently captured stacktraces, top 20
+//    c - clears the currently stored stacktraces
+//    q - exit te program
+kprobe:pty_write / arg2 == 1 / {
+    $key = *((int8*)arg1);
+    if ($key == 112 /* 'p' */) {
+        print(@stacktrace, STACKTRACE_COUNT);
+    }
+    if ($key == 99 /* 'c' */) {
+        clear(@stacktrace);
+    }
+    if ($key == 99 /* 'c' */) {
+        clear(@stacktrace);
+    }
+}
+
+END {
+    print(@stacktrace, STACKTRACE_COUNT);
+    clear(@stacktrace);
+}
