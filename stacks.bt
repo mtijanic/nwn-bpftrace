@@ -33,8 +33,8 @@ kprobe:pty_write / arg2 == 1 / {
     if ($key == 99 /* 'c' */) {
         clear(@stacktrace);
     }
-    if ($key == 99 /* 'c' */) {
-        clear(@stacktrace);
+    if ($key == 113 /* 'q' */) {
+        exit();
     }
 }
 
