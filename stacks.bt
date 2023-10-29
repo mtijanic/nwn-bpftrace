@@ -17,7 +17,10 @@ exit 0
 #define STACKTRACE_DEPTH 8
 #endif
 
-profile:hz:STACKTRACE_FREQUENCY / comm == NWSERVER_NAME / {
+uprobe:NWSERVER:_ZN13CServerExoApp8MainLoopEv {
+    @main_thread_tid = tid;
+}
+profile:hz:STACKTRACE_FREQUENCY / tid == @main_thread_tid / {
     @stacktrace[ustack(STACKTRACE_DEPTH)] = count();
 }
 
@@ -43,4 +46,5 @@ kprobe:pty_write / arg2 == 1 / {
 END {
     print(@stacktrace, STACKTRACE_COUNT);
     clear(@stacktrace);
+    delete(@main_thread_tid);
 }
