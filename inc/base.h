@@ -12,6 +12,9 @@
 #define NWSERVER_NAME "nwserver-linux"
 #endif
 
+#ifndef INTERACTIVE
+#define INTERACTIVE 0
+#endif
 
 #define LOG_LEVEL_DEBUG   7
 #define LOG_LEVEL_INFO    6

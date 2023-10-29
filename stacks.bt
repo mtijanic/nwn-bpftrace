@@ -21,6 +21,7 @@ profile:hz:STACKTRACE_FREQUENCY / comm == NWSERVER_NAME / {
     @stacktrace[ustack(STACKTRACE_DEPTH)] = count();
 }
 
+#if INTERACTIVE
 // On key press
 //    p - prints currently captured stacktraces, top 20
 //    c - clears the currently stored stacktraces
@@ -37,6 +38,7 @@ kprobe:pty_write / arg2 == 1 / {
         exit();
     }
 }
+#endif // INTERACTIVE
 
 END {
     print(@stacktrace, STACKTRACE_COUNT);
