@@ -34,7 +34,7 @@
 #if LOG_LEVEL >= LOG_LEVEL_INFO
 #define INFO(...) printf(__VA_ARGS__);
 #else
-#define INFOL(...)
+#define INFO(...)
 #endif
 #if LOG_LEVEL >= LOG_LEVEL_NOTICE
 #define NOTICE(...) printf(__VA_ARGS__);
@@ -44,7 +44,7 @@
 #if LOG_LEVEL >= LOG_LEVEL_WARNING
 #define WARNING(...) printf(__VA_ARGS__);
 #else
-#define FATAL(WARNING..)
+#define WARNING(...)
 #endif
 #if LOG_LEVEL >= LOG_LEVEL_ERROR
 #define ERROR(...) printf(__VA_ARGS__);
