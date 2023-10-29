@@ -6,6 +6,27 @@ exit 0
 #include "base.h"
 #include "CExoString.h"
 
+
+#if INTERACTIVE
+// On key press
+//    p - prints currently captured stored times
+//    c - clears the currently stored times
+//    q - exit te program
+kprobe:pty_write / arg2 == 1 / {
+    $key = *((int8*)arg1);
+    if ($key == 112 /* 'p' */) {
+        print(@script_exec_times);
+    }
+    if ($key == 99 /* 'c' */) {
+        clear(@script_exec_times);
+    }
+    if ($key == 113 /* 'q' */) {
+        exit();
+    }
+}
+#endif // INTERACTIVE
+
+
 uprobe:NWSERVER:_ZN15CVirtualMachine9RunScriptEP10CExoStringjii {
     @recursion++;
     @start_time[@recursion] = nsecs;
